@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q&A Site</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #question {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        #latest-answer {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        #new-answer {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="question"></div>
+    <div id="latest-answer"></div>
+    <textarea id="new-answer" placeholder="Enter your answer here"></textarea>
+    <button onclick="submitAnswer()">Submit Answer</button>
+
+    <script>
+        const questionId = '1'; // You can change this to load different questions
+
+        async function loadQuestion() {
+            const response = await fetch(`/api/qa/${questionId}`);
+            const data = await response.json();
+            document.getElementById('question').textContent = data.question;
+            const latestAnswerDiv = document.getElementById('latest-answer');
+            if (data.latestAnswer) {
+                latestAnswerDiv.textContent = `${data.latestAnswer.text} (${new Date(data.latestAnswer.timestamp).toLocaleString()})`;
+            } else {
+                latestAnswerDiv.textContent = 'No answer yet.';
+            }
+        }
+
+        async function submitAnswer() {
+            const newAnswer = document.getElementById('new-answer').value;
+            if (newAnswer) {
+                const response = await fetch(`/api/qa/${questionId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ answer: newAnswer }),
+                });
+                if (response.ok) {
+                    document.getElementById('new-answer').value = '';
+                    loadQuestion();
+                }
+            }
+        }
+
+        loadQuestion();
+    </script>
+</body>
+</html>
