@@ -1,5 +1,6 @@
 # whispers-mems
 to run this 
 
-`npm install`
+`npm install` \\
+
 `node server.js`

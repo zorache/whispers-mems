@@ -22,6 +22,10 @@
             background-color: #f0f0f0;
             border-radius: 5px;
         }
+        #latest-answer img {
+            max-width: 100%;
+            height: auto;
+        }
         #new-answer {
             width: 100%;
             height: 100px;
@@ -40,37 +44,59 @@
     <div id="question"></div>
     <div id="latest-answer"></div>
     <textarea id="new-answer" placeholder="Enter your answer here"></textarea>
+    <input type="file" id="image-upload" accept="image/*">
     <button onclick="submitAnswer()">Submit Answer</button>
 
     <script>
-        const questionId = '1'; // You can change this to load different questions
+        const questionId = '1';
 
         async function loadQuestion() {
             const response = await fetch(`/api/qa/${questionId}`);
             const data = await response.json();
             document.getElementById('question').textContent = data.question;
+            
             const latestAnswerDiv = document.getElementById('latest-answer');
             if (data.latestAnswer) {
-                latestAnswerDiv.textContent = `${data.latestAnswer.text} (${new Date(data.latestAnswer.timestamp).toLocaleString()})`;
+                latestAnswerDiv.innerHTML = renderAnswer(data.latestAnswer);
             } else {
                 latestAnswerDiv.textContent = 'No answer yet.';
             }
         }
 
+        function renderAnswer(answer) {
+            let content = '';
+            if (answer.text) {
+                content += `<p>${answer.text}</p>`;
+            }
+            if (answer.image) {
+                content += `<img src="${answer.image}" alt="Answer image">`;
+            }
+            content += `<p><small>${new Date(answer.timestamp).toLocaleString()}</small></p>`;
+            return content;
+        }
+
         async function submitAnswer() {
-            const newAnswer = document.getElementById('new-answer').value;
-            if (newAnswer) {
+            const newAnswer = document.getElementById('new-answer').value.trim();
+            const imageUpload = document.getElementById('image-upload').files[0];
+
+            if (newAnswer || imageUpload) {
+                const formData = new FormData();
+                if (newAnswer) formData.append('answer', newAnswer);
+                if (imageUpload) formData.append('image', imageUpload);
+
                 const response = await fetch(`/api/qa/${questionId}`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ answer: newAnswer }),
+                    body: formData,
                 });
                 if (response.ok) {
                     document.getElementById('new-answer').value = '';
+                    document.getElementById('image-upload').value = '';
                     loadQuestion();
+                } else {
+                    console.error('Failed to submit answer');
                 }
+            } else {
+                alert('Please provide either text or an image');
             }
         }
 
